@@ -16,7 +16,7 @@ def main():
             "4: Plot Time\n"\
             "5: Exit")
         menuAns = input()
-
+        
         if menuAns == '5':
             print("See you next time!")
             return 0
@@ -65,13 +65,15 @@ def activityTypesMenu():
 
         if menuAns == '4':
             return 0
-        elif menuAns == '1': # Add new activity to database
+
+        # See list of activities
+        elif menuAns == '1':
             print("~~~~~~~~~~~~~~~~~~~~~~~~")
+            column = sqlUtil.getColumn(myCursor, dataBase, "Activities","activityName") 
 
-            column = sqlUtil.getColumn(myCursor, dataBase, "Activities","activityName") # Get a list that holds every column, which holds every row in terms of single variable tuples
-
-            for row in range(len(column)): # For every column in the columns...
+            for row in range(len(column)): # For every row in the columns...
                 print(column[row]) # Print the value held there.
+        # Add a new activity
         elif menuAns == '2':
             newActivity = input("Input the new activity name: ")
             addActivity = True
@@ -86,12 +88,12 @@ def activityTypesMenu():
             # If the activity isn't already entered, then enter it.
             if addActivity:
                 sqlUtil.addValueToCell(myCursor,dataBase,"Activities","activityName",newActivity) # Add to Activities table
-                sqlUtil.addColumnToTable(myCursor,dataBase,"Days",newActivity.replace(" ","_")+"_time","VARCHAR(50)")
-
+                dataBase.commit()
                 print ("Activity succesfully added!")
-                #dataBase.commit()
             else: # Otherwise, do not enter it.
                 print("Sorry, we could not add the new activity. The activity likely already exists!")
+
+        # Delete an activity
         elif menuAns == '3':
             print()
 
@@ -105,12 +107,12 @@ def fileTime(dayID=''):
         myCursor.execute("SELECT date FROM Days where dayId='"+dayID+"'")
         for i in myCursor:
             date = i
-
+    
     # Get a list of all activities then print them out. Output is numbered starting at 1
     activityList = sqlUtil.getColumn(myCursor,dataBase,"Activities","activityName")
     for i in range(len(activityList)):
         print(str(i+1)+": "+activityList[i])
-
+    
     activityNum = int(input("Please enter the number of the activity you'd like to file: "))
     activityTime = input("Please enter how much time you spent on this activity on "+date+": ")
 
@@ -125,10 +127,14 @@ def fileTime(dayID=''):
     dataBase.commit()
 
 def test():
-
+    
     print("Hello %s" % ("world",))
-
+     
+    # Check notes for what to do tomorrow. Activity list (or just having all the activties in one easy place regardless)
+    # is helpful because eventually we'll be able to ask the user what specific activities they'd like graphed, then go to the 
+    # Days table, select all the rows from all the columns the user asked for, and then get the data that way.
+        
 
 
 #test()
-main() 
+main()
