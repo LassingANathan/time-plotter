@@ -1,3 +1,4 @@
+from matplotlib.colors import Normalize
 from sqlConnector import dataBase
 import datetime
 from timeIntervals import Day
@@ -29,7 +30,7 @@ def main():
         elif menuAns == '3':
             activityTypesMenu()
         elif menuAns == '4':
-            print("TODO: Select and graph and stuff idk thats a whole thing")
+            graphingMenu()
         else:
             print("Error! Did not enter a valid option.")
 
@@ -45,7 +46,44 @@ def graphingMenu():
         if menuAns == '2':
             return 0
         elif menuAns == '1':
-            print("")
+
+            # Parallel arrays that hold the time spent on an activity and the activity's name
+            totalActivitiesTimeValues = []
+            activityNames = []
+
+            myCursor.execute("SELECT activityId, activityName FROM Activities")
+            activityAttributes = myCursor.fetchall()
+
+            totalTimeSpent = 0
+
+            for i in range(len(activityAttributes)):
+                # Holds the time spent on the current activity being iterated through
+                currentActivityTime = 0
+
+                # Get all time values spent on the current activity being iterated through
+                myCursor.execute("SELECT activityTime FROM Days WHERE activityId = %s", (str(activityAttributes[i][0]),))
+                # Holds all the time spent on the current activity in list form 
+                currentActivityTimeValues = myCursor.fetchall()
+                
+                # If this activity has been filed at any time... (empty lists return False, so if no time is stored for the current activity, then this will be false and we won't add it)
+                if currentActivityTimeValues:
+                    # Then add all values together, and then append to the total activities time values list
+                    for j in range(len(currentActivityTimeValues)):
+                        currentActivityTime += currentActivityTimeValues[j][0]
+
+                    totalActivitiesTimeValues.append(currentActivityTime)
+                    totalTimeSpent += currentActivityTime
+
+                    # Append the name of the current activity being iterated through to the activityNames list
+                    activityNames.append(activityAttributes[i][1])
+
+
+            plt.title(str(totalTimeSpent)+" hours")
+            plt.pie(totalActivitiesTimeValues,labels=activityNames,startangle=90, autopct='%1.2f%%',shadow=True, counterclock=False)
+            plt.axis('equal')
+
+            plt.show()
+                
         else:
             print("Error! Did not enter a valid option")
 
@@ -66,10 +104,10 @@ def activityTypesMenu():
         # See list of activities
         elif menuAns == '1':
             print("~~~~~~~~~~~~~~~~~~~~~~~~")
-            column = sqlUtil.getColumn(myCursor, dataBase, "Activities","activityName") 
+            activityList = sqlUtil.getColumn(myCursor, dataBase, "Activities","activityName") 
 
-            for row in range(len(column)): # For every row in the columns...
-                print(column[row]) # Print the value held there.
+            for row in range(len(activityList)): # For every row in the columns...
+                print(activityList[row]) # Print the value held there.
         # Add a new activity
         elif menuAns == '2':
             newActivity = input("Input the new activity name: ")
@@ -123,11 +161,22 @@ def fileTime(date=''):
     activityId = myCursor.fetchone() #TODO: Make this a function so we don't have to fetch then set equal to first index of tuple everytime
     activityId = activityId[0]
 
+    activityAlreadyDoneOnThisDate = False
+
     # Select the date field where the activityId is the same as the one the user selected, to confirm that this activity has not already been filed today
     myCursor.execute("SELECT date FROM Days WHERE activityId = %s",(str(activityId),))
-    dateWhenActivityWasPreviouslyDone = myCursor.fetchone()
+    datesWhenActivityWasPreviouslyDone = myCursor.fetchall()
 
-    if dateWhenActivityWasPreviouslyDone != None:
+    ###TODO: Just change the above sql statement to select date from days where activityId = ... AND date = date and make sure it's equal to none
+
+    # Iterate through every date where the selected activity has been already been done to make sure the user hasn't
+    # already entered data for this activity on the selected day
+    for i in range(len(datesWhenActivityWasPreviouslyDone)):
+        if datesWhenActivityWasPreviouslyDone[i][0] == date:
+            activityAlreadyDoneOnThisDate = True
+            break
+
+    if activityAlreadyDoneOnThisDate:
         print("You've already filed time for this activity on "+str(date))
         print("Any time you input now will override what you entered earlier!")
 
@@ -135,7 +184,7 @@ def fileTime(date=''):
     #TODO, regardless, time will be stored in minutes. So eventually make it so if they enter in hours, then we convert to minutes first.
 
     # If the activity has already been filed, then update the activityTime field...
-    if dateWhenActivityWasPreviouslyDone != None:
+    if activityAlreadyDoneOnThisDate:
         myCursor.execute("UPDATE Days SET activityTime = %s WHERE activityId = %s AND date = %s",(activityTime,activityId,str(date)))
         dataBase.commit()
     # Else, create a new row
@@ -169,7 +218,5 @@ def fileDay():
 def test():
     print("Hello")
         
-
-
 #test()
 main()
