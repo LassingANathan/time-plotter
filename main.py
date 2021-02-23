@@ -1,15 +1,16 @@
 from sqlConnector import dataBase
+import datetime
 from timeIntervals import Day
-from datetime import datetime
 import sqlInteractions as sqlUtil
 
 myCursor = dataBase.cursor(buffered=True) # prepared=True(?) 
 
 def main():
     menuAns = ''
+    print("\nHello! Welcome to TimePlotter!")
 
     while menuAns != '5':
-        print("\nHello! Welcome to TimePlotter!\n"\
+        print("\nWhat would you like to do?\n"\
             "1: Add New Day\n"\
             "2: File Time\n"\
             "3: Activity Types\n"\
@@ -21,29 +22,7 @@ def main():
             print("See you next time!")
             return 0
         elif menuAns == '1':
-            print("Let's file a new day!")
-
-            # Prompt for day info and enter into database
-            newDate = input("Enter the date (YYYY-MM-DD):")
-            myCursor.execute("INSERT INTO Days (date) VALUES (%s)", (newDate,))
-            print("New date "+newDate+" succesfully created!")
-            dataBase.commit()
-            # TODO, make sure the entered date hasn't already been entered into table
-
-            #menuAns = input(("Would you like to file time for this day now? (Y/N):"))
-            #if menuAns.lower() == 'y':
-            #    myCursor.execute("SELECT dayId FROM Days WHERE date='"+str(newDate)+"'")
-            #    dayIdToEdit = myCursor.fetchall()
-            #    fileTime(dayIdToEdit)
-
-
-            ##activity=input("Enter activity")
-            ##time=float(input("Input how many hours spent"))
-            ##newDay.addTime(activity,time)
-            #myCursor.execute("DROP TABLE Days")
-            #myCursor.execute("CREATE TABLE Days (date VARCHAR(10) NOT NULL, dayName VARCHAR(3), "+activity+"Time VARCHAR(50))")
-            #myCursor.execute("INSERT INTO Days (date, dayName, "+activity+"Time) VALUES (%s,%s,%s)", (newDate, newDayName,str(time)))
-            #dataBase.commit()
+            fileDay()
         elif menuAns == '2':
             fileTime()
         elif menuAns == '3':
@@ -98,23 +77,24 @@ def activityTypesMenu():
         elif menuAns == '3':
             print()
 
-def fileTime(dayID=''):
-    while dayID == '':  # If no dayID is passed, then ask for the date name and get the dayID
-        date = input("Please enter what date you would like to file time for (YYYY/MM/DD): ")
-        myCursor.execute("SELECT dayId FROM Days WHERE date='"+date+"'")
-        dayID = myCursor.fetchone()
-        # If there was no dayId (i.e., there is no day in the database with the given date)
-        if (dayID) == None:
-            print("Oops! We couldn't find the inputted date. Are you sure you've added that day already?")
-            dayID = '' # Reset flag so program asks for input again
-        else:
-            dayID = dayID[0]
+def fileTime(date=''):
+    if date == '':  # If no date value is passed, then ask for the date name and get the dayID
+        while date == '':
+            date = input("Please enter what date you would like to file time for (YYYY/MM/DD): ")
+            date = datetime.datetime.strptime(date,'%Y-%m-%d').date() # Converts from str to datetime.date
+            #TODO Input validation
 
-    #TODO: Make this function work if a dayID is passed in directly.
-    #else: #If a dayID is passed, then get the date
-    #    myCursor.execute("SELECT date FROM Days where dayId='"+dayID+"'")
-    #    date = myCursor.fetchall()
-    
+            # Get list of already entered dates and verify the user is entering a valid date
+            datesList = sqlUtil.getColumn(myCursor,dataBase,"Days","date")
+            dateFound = False
+            for i in datesList:
+                if i == date:
+                    dateFound = True
+                    break
+            if dateFound == False:
+                print("Error: could not find the entered date. Returning to main menu")
+                return 0
+
     # Get a list of all activities then print them out. Output is numbered starting at 1
     activityList = sqlUtil.getColumn(myCursor,dataBase,"Activities","activityName")
     for i in range(len(activityList)):
@@ -126,11 +106,35 @@ def fileTime(dayID=''):
     activityId = myCursor.fetchone() #TODO: Make this a function so we don't have to fetch then set equal to first index of tuple everytime
     activityId = activityId[0]
 
-    activityTime = input("Please enter how much time you spent on this activity on "+date+" in hours: ") #TODO, make it so they can enter in minutes or hours.
+    activityTime = input("Please enter how much time you spent on this activity on "+str(date)+" in hours: ") #TODO, make it so they can enter in minutes or hours.
     #TODO, regardless, time will be stored in minutes. So eventually make it so if they enter in hours, then we convert to minutes first.
 
+    # Enter activity data into database
     myCursor.execute("INSERT INTO Days (date, activityId, activityTime) VALUES (%s, %s, %s)", (date, activityId, activityTime)) ##TODO: Eventually make sure that the amount of time doesn't go over amount of time in day
     dataBase.commit()
+
+def fileDay():
+    print("Let's file a new day!")
+    # Prompt for day info and enter into database
+    newDate = input("Enter the date (YYYY-MM-DD):")
+    newDate = datetime.datetime.strptime(newDate,'%Y-%m-%d').date() # Converts the user sting to a datetime.date for comparison
+
+    # Get list of already entered dates and verify the user is not entering a repeat.
+    datesList = sqlUtil.getColumn(myCursor,dataBase,"Days","date")
+    for date in datesList:
+        if date == newDate:
+            print("Error: it seems that date has already been entered. We'll send you back to the main menu")
+            return 0
+
+    # Enter date into database
+    myCursor.execute("INSERT INTO Days (date) VALUES (%s)", (newDate,))
+    print("New date "+str(newDate)+" succesfully created!")
+    dataBase.commit()
+
+    menuAns = input(("Would you like to file time for this day now? (Y/N):"))
+    if menuAns.lower() == 'y':
+        fileTime(newDate)
+    return 0
 
 def test():
     print("Hello")
