@@ -3,12 +3,12 @@ from timeIntervals import Day
 from datetime import datetime
 import sqlInteractions as sqlUtil
 
-myCursor = dataBase.cursor(buffered=True)
+myCursor = dataBase.cursor(buffered=True) # prepared=True(?) 
 
 def main():
     menuAns = ''
 
-    while menuAns != '4':
+    while menuAns != '5':
         print("\nHello! Welcome to TimePlotter!\n"\
             "1: Add New Day\n"\
             "2: File Time\n"\
@@ -24,16 +24,17 @@ def main():
             print("Let's file a new day!")
 
             # Prompt for day info and enter into database
-            newDate = input("Enter the date (YYYY/MM/DD):")
-            newDayName = input("Enter the day name (M,Tu,W,Th,F,Sat,Sun):")
-            myCursor.execute("INSERT INTO Days (date, dayName) VALUES (%s,%s,%s)", (newDate, newDayName))
-            print("New day "+newDayName+" on "+newDate+" succesfully created!")
+            newDate = input("Enter the date (YYYY-MM-DD):")
+            myCursor.execute("INSERT INTO Days (date) VALUES (%s)", (newDate,))
+            print("New date "+newDate+" succesfully created!")
+            dataBase.commit()
             # TODO, make sure the entered date hasn't already been entered into table
 
-            menuAns = ("Would you like to file time for this day now? (Y/N):")
-            if menuAns.lower() == 'y':
-                dayIdToEdit = myCursor.execute("SELECT dayid FROM Days WHERE date='"+str(newDate)+"'")
-                fileTime(dayIdToEdit)
+            #menuAns = input(("Would you like to file time for this day now? (Y/N):"))
+            #if menuAns.lower() == 'y':
+            #    myCursor.execute("SELECT dayId FROM Days WHERE date='"+str(newDate)+"'")
+            #    dayIdToEdit = myCursor.fetchall()
+            #    fileTime(dayIdToEdit)
 
 
             ##activity=input("Enter activity")
@@ -98,41 +99,41 @@ def activityTypesMenu():
             print()
 
 def fileTime(dayID=''):
-    if dayID == '':  # If no dayID is passed, then ask for the date name and get the dayID
+    while dayID == '':  # If no dayID is passed, then ask for the date name and get the dayID
         date = input("Please enter what date you would like to file time for (YYYY/MM/DD): ")
-        myCursor.execute("SELECT dayId FROM Days WHERE date='"+date+"'") # TODO, input validation
-        for i in myCursor:
-            dayID = str(i).strip("'(,)") #TODO learn how to just get it as a string originally without the for loop and all that
-    else: #If a dayID is passed, then get the date
-        myCursor.execute("SELECT date FROM Days where dayId='"+dayID+"'")
-        for i in myCursor:
-            date = i
+        myCursor.execute("SELECT dayId FROM Days WHERE date='"+date+"'")
+        dayID = myCursor.fetchone()
+        # If there was no dayId (i.e., there is no day in the database with the given date)
+        if (dayID) == None:
+            print("Oops! We couldn't find the inputted date. Are you sure you've added that day already?")
+            dayID = '' # Reset flag so program asks for input again
+        else:
+            dayID = dayID[0]
+
+    #TODO: Make this function work if a dayID is passed in directly.
+    #else: #If a dayID is passed, then get the date
+    #    myCursor.execute("SELECT date FROM Days where dayId='"+dayID+"'")
+    #    date = myCursor.fetchall()
     
     # Get a list of all activities then print them out. Output is numbered starting at 1
     activityList = sqlUtil.getColumn(myCursor,dataBase,"Activities","activityName")
     for i in range(len(activityList)):
         print(str(i+1)+": "+activityList[i])
     
-    activityNum = int(input("Please enter the number of the activity you'd like to file: "))
-    activityTime = input("Please enter how much time you spent on this activity on "+date+": ")
+    activityChoice = input("Please enter the number of the activity you'd like to file: ")
+    myCursor.execute("SELECT activityId FROM Activities WHERE activityName = '"+activityList[int(activityChoice)-1]+"'")
 
-    activityName = activityList[activityNum-1] #The outputted list that the user sees starts at 1, so subtract one since lists start at 0
-    activityName = activityName+"_time" # Add _time, because each time column in Days ends in _time
+    activityId = myCursor.fetchone() #TODO: Make this a function so we don't have to fetch then set equal to first index of tuple everytime
+    activityId = activityId[0]
 
-    query = "UPDATE Days SET '%s' = %s WHERE dayId = %s"
-    #query = "UPDATE Days SET "+activityName+"_time = "+activityTime+" WHERE dayId = "+dayID
-    values = (activityName,activityTime,dayID)
+    activityTime = input("Please enter how much time you spent on this activity on "+date+" in hours: ") #TODO, make it so they can enter in minutes or hours.
+    #TODO, regardless, time will be stored in minutes. So eventually make it so if they enter in hours, then we convert to minutes first.
 
-    myCursor.execute(query, values) ##TODO: Eventually make sure that the amount of time doesn't go over amount of time in day
+    myCursor.execute("INSERT INTO Days (date, activityId, activityTime) VALUES (%s, %s, %s)", (date, activityId, activityTime)) ##TODO: Eventually make sure that the amount of time doesn't go over amount of time in day
     dataBase.commit()
 
 def test():
-    
-    print("Hello %s" % ("world",))
-     
-    # Check notes for what to do tomorrow. Activity list (or just having all the activties in one easy place regardless)
-    # is helpful because eventually we'll be able to ask the user what specific activities they'd like graphed, then go to the 
-    # Days table, select all the rows from all the columns the user asked for, and then get the data that way.
+    print("Hello")
         
 
 
