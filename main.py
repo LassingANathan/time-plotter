@@ -2,6 +2,7 @@ from sqlConnector import dataBase
 import datetime
 from timeIntervals import Day
 import sqlInteractions as sqlUtil
+from matplotlib import pyplot as plt
 
 myCursor = dataBase.cursor(buffered=True) # prepared=True(?) 
 
@@ -31,6 +32,22 @@ def main():
             print("TODO: Select and graph and stuff idk thats a whole thing")
         else:
             print("Error! Did not enter a valid option.")
+
+def graphingMenu():
+    menuAns = ''
+
+    while menuAns != '2':
+        print("\nWhat would you like to do?\n"\
+            "1: Graph time\n"\
+            "2: Return to the main menu")
+        menuAns = input()
+    
+        if menuAns == '2':
+            return 0
+        elif menuAns == '1':
+            print("")
+        else:
+            print("Error! Did not enter a valid option")
 
 def activityTypesMenu():
     menuAns = ''
@@ -106,12 +123,25 @@ def fileTime(date=''):
     activityId = myCursor.fetchone() #TODO: Make this a function so we don't have to fetch then set equal to first index of tuple everytime
     activityId = activityId[0]
 
+    # Select the date field where the activityId is the same as the one the user selected, to confirm that this activity has not already been filed today
+    myCursor.execute("SELECT date FROM Days WHERE activityId = %s",(str(activityId),))
+    dateWhenActivityWasPreviouslyDone = myCursor.fetchone()
+
+    if dateWhenActivityWasPreviouslyDone != None:
+        print("You've already filed time for this activity on "+str(date))
+        print("Any time you input now will override what you entered earlier!")
+
     activityTime = input("Please enter how much time you spent on this activity on "+str(date)+" in hours: ") #TODO, make it so they can enter in minutes or hours.
     #TODO, regardless, time will be stored in minutes. So eventually make it so if they enter in hours, then we convert to minutes first.
 
-    # Enter activity data into database
-    myCursor.execute("INSERT INTO Days (date, activityId, activityTime) VALUES (%s, %s, %s)", (date, activityId, activityTime)) ##TODO: Eventually make sure that the amount of time doesn't go over amount of time in day
-    dataBase.commit()
+    # If the activity has already been filed, then update the activityTime field...
+    if dateWhenActivityWasPreviouslyDone != None:
+        myCursor.execute("UPDATE Days SET activityTime = %s WHERE activityId = %s AND date = %s",(activityTime,activityId,str(date)))
+        dataBase.commit()
+    # Else, create a new row
+    else:
+        myCursor.execute("INSERT INTO Days (date, activityId, activityTime) VALUES (%s, %s, %s)", (date, activityId, activityTime)) ##TODO: Eventually make sure that the amount of time doesn't go over amount of time in day
+        dataBase.commit()
 
 def fileDay():
     print("Let's file a new day!")
