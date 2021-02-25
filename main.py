@@ -46,13 +46,13 @@ def activityTypesMenu():
         if menuAns == '4':
             return 0
 
-        # See list of activities
+        # Print list of activities
         elif menuAns == '1':
             print("~~~~~~~~~~~~~~~~~~~~~~~~")
-            column = sqlUtil.getColumn(myCursor, dataBase, "Activities","activityName") 
+            activityList = sqlUtil.getColumn(myCursor,dataBase,"Activities","activityName")
+            for i in range(len(activityList)):
+                print(str(i+1)+": "+activityList[i])
 
-            for row in range(len(column)): # For every row in the columns...
-                print(column[row]) # Print the value held there.
         # Add a new activity
         elif menuAns == '2':
             newActivity = input("Input the new activity name: ")
@@ -75,7 +75,30 @@ def activityTypesMenu():
 
         # Delete an activity
         elif menuAns == '3':
-            print()
+            # Print list of activities
+            print("~~~~~~~~~~~~~~~~~~~~~~~~")
+            activityList = sqlUtil.getColumn(myCursor,dataBase,"Activities","activityName")
+            for i in range(len(activityList)):
+                print(str(i+1)+": "+activityList[i])
+
+            print("Note: When deleting an activity, all time filed for that activity will also be deleted!")
+            activityChoice = input("Please enter the number of the activity you'd like to delete: ")
+            
+            # Get the activityId so we can delete from Days table
+            myCursor.execute("SELECT activityId FROM Activities WHERE activityName = '"+activityList[int(activityChoice)-1]+"'")
+            activityId = myCursor.fetchone() #TODO: Make function so we don't have to do this everytime
+            activityId = activityId[0]
+
+            # Delete activity from Activities table
+            myCursor.execute("DELETE FROM Activities WHERE activityName = %s", (activityList[int(activityChoice)-1],)) #TODO Input Validation
+
+            # Delete all filed time for this activity from the Days table
+            myCursor.execute("DELETE FROM Days WHERE activityId = %s", (activityId,))
+
+            dataBase.commit()
+            print("Activity deleted!")
+            
+        
 
 def fileTime(date=''):
     if date == '':  # If no date value is passed, then ask for the date name and get the dayID
