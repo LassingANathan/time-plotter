@@ -1,7 +1,6 @@
 from matplotlib.colors import Normalize
 from sqlConnector import dataBase
 import datetime
-from timeIntervals import Day
 import sqlInteractions as sqlUtil
 from matplotlib import pyplot as plt
 
