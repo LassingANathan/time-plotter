@@ -9,6 +9,8 @@ myCursor = dataBase.cursor(buffered=True) # prepared=True(?)
 
 def main():
     menuAns = ''
+    print("[LOGGED IN TO] "+dataBase.database)
+    print("[LOGGED IN AS] "+dataBase.user)
     print("\nHello! Welcome to TimePlotter!")
 
     while menuAns != '5':
@@ -22,6 +24,7 @@ def main():
         
         if menuAns == '5':
             print("See you next time!")
+            myCursor.close()
             return 0
         elif menuAns == '1':
             fileDay()
@@ -47,89 +50,75 @@ def graphingMenu():
             return 0
         elif menuAns == '1':
 
-            # Parallel arrays that hold the time spent on an activity and the activity's name
-            totalActivitiesTimeValues = []
-            activityNames = []
-
             # Prompt and get input
             print("Please enter the start date of the range you would like to graph (yyyy-mm-dd)")
             startDate = input('Note: please enter "all" to graph every date ever entered: ')
 
             # If the user wants to graph all time ever entered... ##TODO: Make the code below a function
             if (startDate.strip('"') == "all"):
-                myCursor.execute("SELECT activityId, activityName FROM Activities")
-                activityAttributes = myCursor.fetchall()
-
-                totalTimeSpent = 0
-
-                for i in range(len(activityAttributes)):
-                    # Holds the time spent on the current activity being iterated through
-                    currentActivityTime = 0
-
-                    # Get all time values spent on the current activity being iterated through
-                    myCursor.execute("SELECT activityTime FROM Days WHERE activityId = %s", (str(activityAttributes[i][0]),))
-                    # Holds all the time spent on the current activity in list form 
-                    currentActivityTimeValues = myCursor.fetchall()
-                    
-                    # If this activity has been filed at any time... (empty lists return False, so if no time is stored for the current activity, then this will be false and we won't add it)
-                    if currentActivityTimeValues:
-                        # Then add all values together, and then append to the total activities time values list
-                        for j in range(len(currentActivityTimeValues)):
-                            currentActivityTime += currentActivityTimeValues[j][0]
-
-                        totalActivitiesTimeValues.append(currentActivityTime)
-                        totalTimeSpent += currentActivityTime
-
-                        # Append the name of the current activity being iterated through to the activityNames list
-                        activityNames.append(activityAttributes[i][1])
-
-                # Format, plot, and show the graph
-                plt.title(str(totalTimeSpent)+" hours")
-                plt.pie(totalActivitiesTimeValues,labels=activityNames,startangle=90, autopct='%1.2f%%',shadow=True, counterclock=False)
-                plt.axis('equal')
-
-                plt.show()
+                plotRangeOfTime()
 
             else:
                 startDate = datetime.datetime.strptime(startDate,'%Y-%m-%d').date()
 
                 endDate = input("Please enter the end date of the range you would like to graph (yyyy-mm-dd): ")
                 endDate = datetime.datetime.strptime(endDate,'%Y-%m-%d').date()
-                myCursor.execute("SELECT activityId, activityName FROM Activities")
-                activityAttributes = myCursor.fetchall()
 
-                totalTimeSpent = 0
-
-                for i in range(len(activityAttributes)):
-                    # Holds the time spent on the current activity being iterated through
-                    currentActivityTime = 0
-
-                    # Get all time values spent on the current activity being iterated through
-                    myCursor.execute("SELECT activityTime FROM Days WHERE activityId = %s AND date BETWEEN %s AND %s", (str(activityAttributes[i][0]),startDate,endDate))
-                    # Holds all the time spent on the current activity in list form 
-                    currentActivityTimeValues = myCursor.fetchall()
-                    
-                    # If this activity has been filed at any time... (empty lists return False, so if no time is stored for the current activity, then this will be false and we won't add it)
-                    if currentActivityTimeValues:
-                        # Then add all values together, and then append to the total activities time values list
-                        for j in range(len(currentActivityTimeValues)):
-                            currentActivityTime += currentActivityTimeValues[j][0]
-
-                        totalActivitiesTimeValues.append(currentActivityTime)
-                        totalTimeSpent += currentActivityTime
-
-                        # Append the name of the current activity being iterated through to the activityNames list
-                        activityNames.append(activityAttributes[i][1])
-
-                # Format, plot, and show the graph
-                plt.title(str(totalTimeSpent)+" hours")
-                plt.pie(totalActivitiesTimeValues,labels=activityNames,startangle=90, autopct='%1.2f%%',shadow=True, counterclock=False)
-                plt.axis('equal')
-
-                plt.show()
+                plotRangeOfTime(startDate,endDate)
                 
         else:
             print("Error! Did not enter a valid option")
+
+def plotRangeOfTime(*args): ##TODO: Replace with kargs so we can name the parameters and such
+    # Parallel arrays that hold the time spent on an activity and the activity's name
+    totalActivitiesTimeValues = []
+    activityNames = []
+
+    if len(args) == 0:
+        myCursor.execute("SELECT MIN(date) FROM Days")
+        startDate = myCursor.fetchone()
+        startDate = startDate[0]
+
+        myCursor.execute("SELECT MAX(date) FROM Days")
+        endDate = myCursor.fetchone()
+        endDate = endDate[0]
+    else:
+        startDate = args[0]
+        endDate = args[1]
+
+    myCursor.execute("SELECT activityId, activityName FROM Activities")
+    activityAttributes = myCursor.fetchall()
+
+    totalTimeGraphed = 0
+
+    for i in range(len(activityAttributes)):
+        # Holds the time spent on the current activity being iterated through
+            currentActivityTime = 0
+
+            # Get all time values spent on the current activity being iterated through
+            myCursor.execute("SELECT activityTime FROM Days WHERE activityId = %s AND date BETWEEN %s AND %s", (str(activityAttributes[i][0]),startDate,endDate))
+            # Holds all the time spent on the current activity in list form 
+            currentActivityTimeValues = myCursor.fetchall()
+            
+            # If this activity has been filed at any time... (empty lists return False, so if no time is stored for the current activity, then this will be false and we won't add it)
+            if currentActivityTimeValues:
+                # Then add all values together, and then append to the total activities time values list
+                for j in range(len(currentActivityTimeValues)):
+                    currentActivityTime += currentActivityTimeValues[j][0]
+
+                totalActivitiesTimeValues.append(currentActivityTime)
+                totalTimeGraphed += currentActivityTime
+
+                # Append the name of the current activity being iterated through to the activityNames list
+                activityNames.append(activityAttributes[i][1])
+        
+    # Format, plot, and show the graph
+    plt.title(str(totalTimeGraphed)+" hours")
+    plt.pie(totalActivitiesTimeValues,labels=activityNames,startangle=90, autopct='%1.2f%%',shadow=True, counterclock=False)
+    plt.axis('equal')
+
+    plt.show()
+
 
 def activityTypesMenu():
     menuAns = ''
@@ -183,7 +172,7 @@ def activityTypesMenu():
             activityChoice = input("Please enter the number of the activity you'd like to delete: ")
             
             # Get the activityId so we can delete from Days table
-            myCursor.execute("SELECT activityId FROM Activities WHERE activityName = '"+activityList[int(activityChoice)-1]+"'")
+            myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s", (activityList[int(activityChoice)-1],))
             activityId = myCursor.fetchone() #TODO: Make function so we don't have to do this everytime
             activityId = activityId[0]
 
@@ -201,7 +190,7 @@ def activityTypesMenu():
 def fileTime(date=''):
     if date == '':  # If no date value is passed, then ask for the date name and get the dayID
         while date == '':
-            date = input("Please enter what date you would like to file time for (YYYY/MM/DD): ")
+            date = input("Please enter what date you would like to file time for (YYYY-MM-DD): ")
             date = datetime.datetime.strptime(date,'%Y-%m-%d').date() # Converts from str to datetime.date
             #TODO Input validation
 
@@ -246,7 +235,7 @@ def fileTime(date=''):
         print("You've already filed time for this activity on "+str(date))
         print("Any time you input now will override what you entered earlier!")
 
-    activityTime = input("Please enter how much time you spent on this activity on "+str(date)+" in hours: ") #TODO, make it so they can enter in minutes or hours.
+    activityTime = input("Please enter how much time you spent on this activity on "+str(date)+" in minutes: ") #TODO, make it so they can enter in minutes or hours.
     #TODO, regardless, time will be stored in minutes. So eventually make it so if they enter in hours, then we convert to minutes first.
 
     # If the activity has already been filed, then update the activityTime field...
