@@ -113,9 +113,6 @@ def graphingMenu(personId):
                 print("(Enter -1 to return to the main menu)")
                 startDate = input('Note: please enter "all" to graph time from every date ever entered: ')
 
-                # Return to main menu if user entered -1
-                if (startDate == '-1'):
-                    return 0
                 # If the user wants to graph all time ever entered...
                 if (startDate.strip('" ') == "all"):
                     inputValid = True
@@ -123,17 +120,21 @@ def graphingMenu(personId):
                 # If the user wants to graph from a specified range...
                 else:
                     # Input validation
-                    #try:
-                    startDate = datetime.datetime.strptime(startDate,'%Y-%m-%d').date()
+                    try:
+                        startDate = datetime.datetime.strptime(startDate,'%Y-%m-%d').date()
 
-                    endDate = input("Please enter the end date of the range you would like to graph (yyyy-mm-dd): ")
-                    endDate = datetime.datetime.strptime(endDate,'%Y-%m-%d').date()
+                        print("(Enter -1 to return to the main menu)")
+                        endDate = input("Please enter the end date of the range you would like to graph (yyyy-mm-dd): ")
 
-                    inputValid = True
+                        endDate = datetime.datetime.strptime(endDate,'%Y-%m-%d').date()
 
-                    plotRangeOfTime(startDate,endDate, personId)
-                #except ValueError:
-                    print("\nError: Invalid date input. Please try again.")
+                        inputValid = True
+
+                        plotRangeOfTime(startDate,endDate, personId)
+                    except ValueError:
+                        if (startDate == '-1' or endDate == '-1'):
+                            return 0
+                        print("\nError: Invalid date input. Please try again.")
                 
         else:
             print("Error! Did not enter a valid option")
@@ -278,6 +279,9 @@ def fileTime(personId):
         print("Error: chosen activity number does not exist.")
         print("(Enter -1 to return to the main menu)")
         activityChoice = input("Please enter the number of the activity you'd like to delete: ")
+        # Return to main menu if user entered -1
+        if (activityChoice == '-1'):
+            return 0
 
     myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s AND personId = %s", (activityList[int(activityChoice)-1][0], personId))
 
