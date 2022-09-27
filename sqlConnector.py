@@ -1,9 +1,10 @@
 import mysql.connector
 import matplotlib.pyplot as plt
 
+# Replace arguments below
 dataBase = mysql.connector.connect(
-    host="johnny.heliohost.org",
-    user="lassinga_public-user",
-    passwd="PublicPasswd071902",
-    database="lassinga_timePlotter"
+    host="localhost",
+    user="root",
+    passwd="INSERT_PASSWD",
+    database="timeplotter"
     )
