@@ -34,7 +34,7 @@ def userMenu():
             userNameInput = input("Please enter a new username: ")
 
             # Verify the user didn't enter 'new' or '-1' as a username (sentinals)
-            if userNameInput == '-1' or userNameInput == 'new':
+            if (userNameInput == '-1' or userNameInput == 'new'):
                 print("\nError: Username can't be 'new' or '-1'\n")
                 continue
 
@@ -43,7 +43,7 @@ def userMenu():
             duplicateName = myCursor.fetchall()
 
             # If a duplicate name exists...
-            if duplicateName:
+            if (duplicateName):
                 print("\nThis name already exists, maybe try another?\n")
             else:
                 myCursor.execute("INSERT INTO People (personName) VALUES (%s)", (userNameInput,))
@@ -58,7 +58,7 @@ def userMenu():
             personId = myCursor.fetchall()
 
             # If entered username was found...
-            if personId:
+            if (personId):
                 personId = personId[0][0] #TODO: Make fuction smh
                 userName = menuInput
                 loggedIn = True
@@ -78,17 +78,17 @@ def mainMenu(personId, userName):
             "4: Exit")
         menuInput = input()
         
-        if menuInput == '4':
+        if (menuInput == '4'):
             print("See you next time!")
             myCursor.close()
             return 0
-        elif menuInput == '1':
+        elif (menuInput == '1'):
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             fileTime(personId)
-        elif menuInput == '2':
+        elif (menuInput == '2'):
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             activityTypesMenu(personId)
-        elif menuInput == '3':
+        elif (menuInput == '3'):
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             graphingMenu(personId)
         else:
@@ -103,9 +103,9 @@ def graphingMenu(personId):
             "2: Return to the main menu")
         menuInput = input()
     
-        if menuInput == '2':
+        if (menuInput == '2'):
             return 0
-        elif menuInput == '1':
+        elif (menuInput == '1'):
             inputValid = False
             while inputValid == False:
                 # Prompt for start date of graphing
@@ -114,7 +114,7 @@ def graphingMenu(personId):
                 startDate = input('Note: please enter "all" to graph time from every date ever entered: ')
 
                 # Return to main menu if user entered -1
-                if(startDate == '-1'):
+                if (startDate == '-1'):
                     return 0
                 # If the user wants to graph all time ever entered...
                 if (startDate.strip('" ') == "all"):
@@ -148,11 +148,11 @@ def activityTypesMenu(personId):
             "4: Back")
         menuInput = input()
 
-        if menuInput == '4':
+        if (menuInput == '4'):
             return 0
 
         # Print list of activities
-        elif menuInput == '1':
+        elif (menuInput == '1'):
             # Get all user's activities ## TODO Print activities function
             myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s", (personId,))
             activityList = myCursor.fetchall()
@@ -164,7 +164,7 @@ def activityTypesMenu(personId):
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
         # Add a new activity
-        elif menuInput == '2':
+        elif (menuInput == '2'):
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             print("(Enter -1 to return to the main menu)")
             newActivity = input("Input the new activity name: ")
@@ -178,12 +178,12 @@ def activityTypesMenu(personId):
 
             # Check to ensure the user entered activity doesn't already exist
             for activity in myCursor:
-                if activity == newActivity:
+                if (activity == newActivity):
                     addActivity = False
                     break
 
             # If the activity isn't already entered, then enter it.
-            if addActivity:
+            if (addActivity):
                 myCursor.execute("INSERT INTO Activities (personId, activityName) VALUES (%s, %s);", (personId, newActivity))
                 dataBase.commit()
                 print ("Activity succesfully added!")
@@ -191,7 +191,7 @@ def activityTypesMenu(personId):
                 print("Sorry, we could not add the new activity. The activity likely already exists!")
 
         # Delete an activity
-        elif menuInput == '3':
+        elif (menuInput == '3'):
             # Get all user's activities
             myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s", (personId,))
             activityList = myCursor.fetchall()
@@ -295,11 +295,11 @@ def fileTime(personId):
     # Iterate through every date where the selected activity has been already been done to make sure the user hasn't
     # already entered data for this activity on the selected day
     for i in range(len(datesWhenActivityWasPreviouslyDone)):
-        if datesWhenActivityWasPreviouslyDone[i][0] == date:
+        if (datesWhenActivityWasPreviouslyDone[i][0] == date):
             activityAlreadyDoneOnThisDate = True
             break
 
-    if activityAlreadyDoneOnThisDate:
+    if (activityAlreadyDoneOnThisDate):
         print("You've already filed time for this activity on "+str(date))
         print("Any time you input now will override what you entered earlier!")
 
@@ -312,7 +312,7 @@ def fileTime(personId):
         return 0
 
     # If the activity has already been filed, then update the activityTime field...
-    if activityAlreadyDoneOnThisDate:
+    if (activityAlreadyDoneOnThisDate):
         myCursor.execute("UPDATE Days SET activityTime = %s WHERE activityId = %s AND date = %s",(activityTime,activityId,str(date)))
         dataBase.commit()
     # Else, create a new row
@@ -326,7 +326,7 @@ def plotRangeOfTime(*args): ##TODO: Replace with kargs so we can name the parame
     activityNames = []
 
     # Graph all time
-    if len(args) == 1:
+    if (len(args) == 1):
         personId = args[0]
 
         myCursor.execute("SELECT MIN(date) FROM Days WHERE personId = %s", (personId,))
@@ -338,7 +338,7 @@ def plotRangeOfTime(*args): ##TODO: Replace with kargs so we can name the parame
         endDate = endDate[0]
 
     # Graph user entered range of time
-    elif len(args) == 3:
+    elif (len(args) == 3):
         startDate = args[0]
         endDate = args[1]
         personId = args[2]
@@ -359,7 +359,7 @@ def plotRangeOfTime(*args): ##TODO: Replace with kargs so we can name the parame
         currentActivityTimeValues = myCursor.fetchall()
         
         # If this activity has been filed at any time... (empty lists return False, so if no time is stored for the current activity, then this will be false and we won't add it)
-        if currentActivityTimeValues:
+        if (currentActivityTimeValues):
             # Then add all values together, and then append to the total activities time values list
             for j in range(len(currentActivityTimeValues)):
                 currentActivityTime += currentActivityTimeValues[j][0]
