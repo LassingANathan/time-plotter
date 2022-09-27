@@ -6,10 +6,11 @@ import sys
 myCursor = dataBase.cursor(buffered=True)
 
 def main():
-    personId, userName = userMenu()
-    mainMenu(personId, userName)
+    personId = userMenu()
+    mainMenu(personId)
 
-def userMenu():
+## Login menu. Returns the personId as a string
+def userMenu() -> str:
     loggedIn = False
 
     print("\n[LOGGED IN TO DATABASE] "+dataBase.database)
@@ -17,7 +18,6 @@ def userMenu():
 
     print("\nHello! Welcome to TimePlotter!")
 
-    ## TODO: Delete users
     while not loggedIn:
         # Prompt for username
         print("Please enter your username: ")
@@ -49,7 +49,6 @@ def userMenu():
                 myCursor.execute("INSERT INTO People (personName) VALUES (%s)", (userNameInput,))
                 dataBase.commit()
                 personId = myCursor.lastrowid
-                userName = userNameInput
                 loggedIn = True
     
         # Entering an existing username
@@ -65,9 +64,11 @@ def userMenu():
             else: 
                 print("\nNo user found with that name. Maybe create a new one?\n")
 
-    return personId, userName     
+    return personId  
 
-def mainMenu(personId, userName):
+## Main menu. Leads to other menus for more specific actions
+#personId=the id of the current user
+def mainMenu(personId: str) -> int:
     menuInput = ''
 
     while menuInput != '4':
@@ -84,17 +85,19 @@ def mainMenu(personId, userName):
             return 0
         elif (menuInput == '1'):
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            fileTime(personId)
+            timeFilingMenu(personId)
         elif (menuInput == '2'):
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            activityTypesMenu(personId)
+            activitiesMenu(personId)
         elif (menuInput == '3'):
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             graphingMenu(personId)
         else:
             print("Error! Did not enter a valid option.")
 
-def graphingMenu(personId):
+## Graphing menu. Menu for all time graphing options
+#personId=the id of the current user
+def graphingMenu(personId: str) -> int:
     menuInput = ''
 
     while menuInput != '2':
@@ -130,7 +133,7 @@ def graphingMenu(personId):
 
                         inputValid = True
 
-                        plotRangeOfTime(startDate,endDate, personId)
+                        plotRangeOfTime(personId, startDate, endDate)
                     except ValueError:
                         if (startDate == '-1' or endDate == '-1'):
                             return 0
@@ -139,7 +142,9 @@ def graphingMenu(personId):
         else:
             print("Error! Did not enter a valid option")
 
-def activityTypesMenu(personId):
+## Activities menu. Menu for all activity related options
+#personId=the id of the current user
+def activitiesMenu(personId):
     menuInput = ''
 
     while menuInput != '4':
@@ -237,7 +242,9 @@ def activityTypesMenu(personId):
             dataBase.commit()
             print("Activity deleted!")
             
-def fileTime(personId):
+## Time filing menu. Menu for all time filing related options
+#personId=the id of the current user
+def timeFilingMenu(personId: str) -> int:
     inputValid = False
     while inputValid == False:
         # Prompt for date to file time for
@@ -324,15 +331,15 @@ def fileTime(personId):
         myCursor.execute("INSERT INTO Days (date, personId, activityId, activityTime) VALUES (%s, %s, %s, %s)", (date, personId, activityId, activityTime)) ##TODO: Eventually make sure that the amount of time doesn't go over amount of time in day
         dataBase.commit()
 
-def plotRangeOfTime(*args): ##TODO: Replace with kargs so we can name the parameters and such
+## Creates a pyPlot pie chart of tracked time in a range of dates. Graphs all tracked time if no date range is given
+#personId=the id of the current user, startDate=optional datetime.date for the beginning of range to graph, endDate=optional datetime.date for the end of range to graph
+def plotRangeOfTime(personId: str, startDate: datetime.date = None, endDate: datetime.date = None) -> None:
     # Parallel arrays that hold the time spent on an activity and the activity's name
     totalActivitiesTimeValues = []
     activityNames = []
 
-    # Graph all time
-    if (len(args) == 1):
-        personId = args[0]
-
+    # Set startDate and endDate to min and max dates (graph all tracked time) if no values were passed
+    if (startDate == None and endDate == None):
         myCursor.execute("SELECT MIN(date) FROM Days WHERE personId = %s", (personId,))
         startDate = myCursor.fetchone()
         startDate = startDate[0]
@@ -340,12 +347,6 @@ def plotRangeOfTime(*args): ##TODO: Replace with kargs so we can name the parame
         myCursor.execute("SELECT MAX(date) FROM Days WHERE personId = %s", (personId,))
         endDate = myCursor.fetchone()
         endDate = endDate[0]
-
-    # Graph user entered range of time
-    elif (len(args) == 3):
-        startDate = args[0]
-        endDate = args[1]
-        personId = args[2]
 
     myCursor.execute("SELECT activityId, activityName FROM Activities WHERE personId = %s", (personId,))
     # List of tuples. Each tuple holds an activity's id and its name
