@@ -35,7 +35,7 @@ def userMenu() -> str:
 
             # Verify the user didn't enter 'new' or '-1' as a username (sentinals)
             if (userNameInput == '-1' or userNameInput == 'new'):
-                print("\nError: Username can't be 'new' or '-1'\n")
+                print("\nERROR: Username can't be 'new' or '-1'\n")
                 continue
 
             # Verify that no one already uses this username
@@ -94,7 +94,7 @@ def mainMenu(personId: str) -> int:
             #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             graphingMenu(personId)
         else:
-            print("Error! Did not enter a valid option.")
+            print("\nERROR: Did not enter a valid option.")
 
 ## Graphing menu. Menu for all time graphing options
 #personId=the id of the current user
@@ -137,10 +137,10 @@ def graphingMenu(personId: str) -> int:
                     except ValueError:
                         if (startDate == '-1' or endDate == '-1'):
                             return 0
-                        print("\nError: Invalid date input. Please try again.")
+                        print("\nERROR: Invalid date input. Please try again.")
                 
         else:
-            print("Error! Did not enter a valid option")
+            print("\nERROR: Did not enter a valid option")
 
 ## Activities menu. Menu for all activity related options
 #personId=the id of the current user
@@ -205,7 +205,7 @@ def activitiesMenu(personId):
 
             # Input validation, make sure entered activity number is within range
             while(int(activityChoice) > len(activityList) or (int(activityChoice) != -1 and int(activityChoice) <= 0)):
-                print("Error: chosen activity number does not exist.")
+                print("\nERROR: chosen activity number does not exist.\n")
                 print("NOTE: When deleting an activity, ALL time filed for that activity will also be deleted!")
                 print("(Enter -1 to return to the main menu)")
                 activityChoice = input("Please enter the number of the activity you'd like to delete: ")
@@ -227,7 +227,9 @@ def activitiesMenu(personId):
 
             dataBase.commit()
             print("Activity deleted!")
-            
+                
+        else:
+            print("\nERROR: Did not enter a valid option.")
 ## Time filing menu. Menu for all time filing related options
 #personId=the id of the current user
 def timeFilingMenu(personId: str) -> int:
@@ -246,7 +248,7 @@ def timeFilingMenu(personId: str) -> int:
             # Return to main menu if user entered -1
             if (date == '-1'):
                 return 0
-            print("\nError: Invalid date input. Please try again.")
+            print("\nERROR: Invalid date input. Please try again.")
 
     # Get and print all user activities
     activityList = printUserActivities(personId)
@@ -260,7 +262,7 @@ def timeFilingMenu(personId: str) -> int:
 
     # Input validation
     while(int(activityChoice) > len(activityList) or (int(activityChoice) <= 0)):
-        print("\nError: chosen activity number does not exist.")
+        print("\nERROR: chosen activity number does not exist.")
         print("\n(Enter -1 to return to the main menu)")
         activityChoice = input("Please enter the number of the activity you'd like to file: ")
         # Return to main menu if user entered -1
