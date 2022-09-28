@@ -5,7 +5,7 @@ import sys
 
 myCursor = dataBase.cursor(buffered=True)
 
-def main():
+def main() -> None:
     personId = userMenu()
     mainMenu(personId)
 
@@ -144,7 +144,7 @@ def graphingMenu(personId: str) -> int:
 
 ## Activities menu. Menu for all activity related options
 #personId=the id of the current user
-def activitiesMenu(personId):
+def activitiesMenu(personId) -> int:
     menuInput = ''
 
     while menuInput != '4':
@@ -227,7 +227,7 @@ def activitiesMenu(personId):
 
             dataBase.commit()
             print("Activity deleted!")
-                
+
         else:
             print("\nERROR: Did not enter a valid option.")
 ## Time filing menu. Menu for all time filing related options
