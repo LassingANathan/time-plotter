@@ -262,7 +262,7 @@ def timeFilingMenu(personId: str) -> int:
     while(int(activityChoice) > len(activityList) or (int(activityChoice) <= 0)):
         print("\nError: chosen activity number does not exist.")
         print("\n(Enter -1 to return to the main menu)")
-        activityChoice = input("Please enter the number of the activity you'd like to delete: ")
+        activityChoice = input("Please enter the number of the activity you'd like to file: ")
         # Return to main menu if user entered -1
         if (activityChoice == '-1'):
             return 0
