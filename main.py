@@ -72,7 +72,8 @@ def mainMenu(personId: str) -> int:
     menuInput = ''
 
     while menuInput != '4':
-        print("\nWhat would you like to do?\n"\
+        print("\nMain Menu:")
+        print("What would you like to do?\n"\
             "1: File Time\n"\
             "2: Activity Menu\n"\
             "3: Plot Time\n"\
@@ -84,13 +85,13 @@ def mainMenu(personId: str) -> int:
             myCursor.close()
             return 0
         elif (menuInput == '1'):
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             timeFilingMenu(personId)
         elif (menuInput == '2'):
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             activitiesMenu(personId)
         elif (menuInput == '3'):
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             graphingMenu(personId)
         else:
             print("Error! Did not enter a valid option.")
@@ -101,6 +102,7 @@ def graphingMenu(personId: str) -> int:
     menuInput = ''
 
     while menuInput != '2':
+        print("\nGraphing Menu:")
         print("What would you like to do?\n"\
             "1: Graph time\n"\
             "2: Return to the main menu")
@@ -112,7 +114,7 @@ def graphingMenu(personId: str) -> int:
             inputValid = False
             while inputValid == False:
                 # Prompt for start date of graphing
-                print("Please enter the start date of the range you would like to graph (yyyy-mm-dd)")
+                print("\nPlease enter the START DATE of the range you would like to graph (yyyy-mm-dd)")
                 print("(Enter -1 to return to the main menu)")
                 startDate = input('Note: please enter "all" to graph time from every date ever entered: ')
 
@@ -126,9 +128,7 @@ def graphingMenu(personId: str) -> int:
                     try:
                         startDate = datetime.datetime.strptime(startDate,'%Y-%m-%d').date()
 
-                        print("(Enter -1 to return to the main menu)")
-                        endDate = input("Please enter the end date of the range you would like to graph (yyyy-mm-dd): ")
-
+                        endDate = input("Please enter the END DATE of the range you would like to graph (yyyy-mm-dd): ")
                         endDate = datetime.datetime.strptime(endDate,'%Y-%m-%d').date()
 
                         inputValid = True
@@ -148,6 +148,7 @@ def activitiesMenu(personId):
     menuInput = ''
 
     while menuInput != '4':
+        print("\nActivities Menu:")
         print("1: See list of activities\n"\
             "2: Add new activity\n"\
             "3: Delete activity\n"\
@@ -159,20 +160,12 @@ def activitiesMenu(personId):
 
         # Print list of activities
         elif (menuInput == '1'):
-            # Get all user's activities ## TODO Print activities function
-            myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s", (personId,))
-            activityList = myCursor.fetchall()
-
-            # Print user's activities
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            for i in range(len(activityList)):
-                print(str(i+1)+": "+activityList[i][0])
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # Print all user activities
+            printUserActivities(personId)
 
         # Add a new activity
         elif (menuInput == '2'):
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            print("(Enter -1 to return to the main menu)")
+            print("\n(Enter -1 to return to the main menu)")
             newActivity = input("Input the new activity name: ")
 
             # Return to main menu if user entered -1
@@ -198,18 +191,11 @@ def activitiesMenu(personId):
 
         # Delete an activity
         elif (menuInput == '3'):
-            # Get all user's activities
-            myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s", (personId,))
-            activityList = myCursor.fetchall()
-
-            # Print user's activities
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            for i in range(len(activityList)):
-                print(str(i+1)+": "+activityList[i][0])
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # Get and print all user activities
+            activityList = printUserActivities(personId)
 
             # Prompt for activity to delete
-            print("NOTE: When deleting an activity, ALL time filed for that activity will also be deleted!")
+            print("\nNOTE: When deleting an activity, ALL time filed for that activity will also be deleted!")
             print("(Enter -1 to return to the main menu)")
             activityChoice = input("Please enter the number of the activity you'd like to delete: ")
 
@@ -248,7 +234,7 @@ def timeFilingMenu(personId: str) -> int:
     inputValid = False
     while inputValid == False:
         # Prompt for date to file time for
-        print("(Enter -1 to return to the main menu)")
+        print("\n(Enter -1 to return to the main menu)")
         date = input("Please enter what date you would like to file time for (YYYY-MM-DD): ")
 
         # Input validation
@@ -262,19 +248,10 @@ def timeFilingMenu(personId: str) -> int:
                 return 0
             print("\nError: Invalid date input. Please try again.")
 
-        # Get a list of all activities then print them out. Output is numbered starting at 1
-        # Get all user's activities
-        myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s", (personId,))
-        activityList = myCursor.fetchall()
-
-        # Print user's activities
-        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        for i in range(len(activityList)):
-            print(str(i+1)+": "+activityList[i][0])
-        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    
+    # Get and print all user activities
+    activityList = printUserActivities(personId)
     # Prompt for activity to file
-    print("(Enter -1 to return to the main menu)")
+    print("\n(Enter -1 to return to the main menu)")
     activityChoice = input("Please enter the number of the activity you'd like to file: ")
 
     # Return to main menu if user entered -1
@@ -283,8 +260,8 @@ def timeFilingMenu(personId: str) -> int:
 
     # Input validation
     while(int(activityChoice) > len(activityList) or (int(activityChoice) <= 0)):
-        print("Error: chosen activity number does not exist.")
-        print("(Enter -1 to return to the main menu)")
+        print("\nError: chosen activity number does not exist.")
+        print("\n(Enter -1 to return to the main menu)")
         activityChoice = input("Please enter the number of the activity you'd like to delete: ")
         # Return to main menu if user entered -1
         if (activityChoice == '-1'):
@@ -311,10 +288,10 @@ def timeFilingMenu(personId: str) -> int:
             break
 
     if (activityAlreadyDoneOnThisDate):
-        print("You've already filed time for this activity on "+str(date))
+        print("\nYou've already filed time for this activity on "+str(date))
         print("Any time you input now will override what you entered earlier!")
 
-    print("(Enter -1 to return to the main menu)")
+    print("\n(Enter -1 to return to the main menu)")
     activityTime = input("Please enter how much time you spent on this activity on "+str(date)+" in minutes: ") #TODO, make it so they can enter in minutes or hours.
     #TODO, regardless, time will be stored in minutes. So eventually make it so if they enter in hours, then we convert to minutes first.
 
@@ -381,5 +358,20 @@ def plotRangeOfTime(personId: str, startDate: datetime.date = None, endDate: dat
     plt.axis('equal')
 
     plt.show()
+
+## Prints out numbered list of all activities belonging to the given person. Returns a list of the activities (as tuples holding activity name string)
+#personId=the id of the current user
+def printUserActivities(personId : str) -> list:
+    myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s", (personId,))
+    activityList = myCursor.fetchall()
+
+    # Print user's activities
+    print("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print("Activity List:")
+    for i in range(len(activityList)):
+        print(str(i+1)+": "+activityList[i][0])
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+
+    return activityList
 
 main()
