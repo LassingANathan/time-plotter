@@ -113,31 +113,39 @@ def graphingMenu(personId: str) -> int:
         elif (menuInput == '1'):
             inputValid = False
             while inputValid == False:
-                # Prompt for start date of graphing
-                print("\nPlease enter the START DATE of the range you would like to graph (yyyy-mm-dd)")
-                print("(Enter -1 to return to the main menu)")
-                startDate = input('Note: please enter "all" to graph time from every date ever entered: ')
+                # Input validation
+                try:
+                    # Prompt for start date of graphing
+                    print("\nPlease enter the START DATE of the range you would like to graph (yyyy-mm-dd)")
+                    print("(Enter -1 to return to the main menu)")
+                    startDate = input('Note: please enter "all" to graph time from every date ever entered: ')
+                    # Return to main menu if "-1" was entered
+                    if (startDate == '-1'):
+                        return 0
 
-                # If the user wants to graph all time ever entered...
-                if (startDate.strip('" ') == "all"):
-                    inputValid = True
-                    plotRangeOfTime(personId)
-                # If the user wants to graph from a specified range...
-                else:
-                    # Input validation
-                    try:
+                    # Graph all tracked time if "all" was entered
+                    if (startDate.strip('" ') == "all"):
+                        inputValid = True
+                        plotRangeOfTime(personId)
+                    # Graph from a range of time
+                    else:
+                        # Try to convert startDate to a datetime.date
                         startDate = datetime.datetime.strptime(startDate,'%Y-%m-%d').date()
 
+                        # Prompt for the endDate
                         endDate = input("Please enter the END DATE of the range you would like to graph (yyyy-mm-dd): ")
+                        # Return to main menu if "-1" was entered
+                        if (endDate == '-1'):
+                            return 0
+
+                        # Try to convert endDate to a datetime.date
                         endDate = datetime.datetime.strptime(endDate,'%Y-%m-%d').date()
 
                         inputValid = True
-
                         plotRangeOfTime(personId, startDate, endDate)
-                    except ValueError:
-                        if (startDate == '-1' or endDate == '-1'):
-                            return 0
-                        print("\nERROR: Invalid date input. Please try again.")
+
+                except ValueError:
+                    print("\nERROR: Invalid date input. Please try again.")
                 
         else:
             print("\nERROR: Did not enter a valid option")
@@ -191,32 +199,38 @@ def activitiesMenu(personId) -> int:
 
         # Delete an activity
         elif (menuInput == '3'):
-            # Get and print all user activities
-            activityList = printUserActivities(personId)
+            inputValid = False
+            # Ask for date to file time on
+            while inputValid == False:
+                # Input validation for entering an int
+                try:
+                    # Get and print all user activities
+                    activityList = printUserActivities(personId)
+                    # Prompt for activity to delete
+                    print("\nNOTE: When deleting an activity, ALL time filed for that activity will also be deleted!")
+                    print("(Enter -1 to return to the main menu)")
+                    activityChoice = input("Please enter the number of the activity you'd like to delete: ")
 
-            # Prompt for activity to delete
-            print("\nNOTE: When deleting an activity, ALL time filed for that activity will also be deleted!")
-            print("(Enter -1 to return to the main menu)")
-            activityChoice = input("Please enter the number of the activity you'd like to delete: ")
+                    # Return to main menu if user entered -1
+                    if (activityChoice == '-1'):
+                        return 0
+                    
+                    # See if the input can be converted to an int
+                    int(activityChoice)
+                except ValueError:
+                    print("\nERROR: given value was not a number.")
+                    continue
 
-            # Return to main menu if user entered -1
-            if (activityChoice == '-1'):
-                return 0
-
-            # Input validation, make sure entered activity number is within range
-            while(int(activityChoice) > len(activityList) or (int(activityChoice) != -1 and int(activityChoice) <= 0)):
-                print("\nERROR: chosen activity number does not exist.\n")
-                print("NOTE: When deleting an activity, ALL time filed for that activity will also be deleted!")
-                print("(Enter -1 to return to the main menu)")
-                activityChoice = input("Please enter the number of the activity you'd like to delete: ")
-
-                # Return to main menu if user entered -1
-                if (activityChoice == '-1'):
-                    return 0
+                # Input validation for entering a valid int
+                if ((int(activityChoice) > len(activityList)) or (int(activityChoice) <= 0)):
+                    print("\nERROR: chosen activity number does not exist.")
+                    continue
+            
+                inputValid = True
             
             # Get the activityId so we can delete from Days table
             myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s AND personId = %s", (activityList[int(activityChoice)-1][0], personId))
-            activityId = myCursor.fetchone() #TODO: Make function so we don't have to do this everytime
+            activityId = myCursor.fetchone()
             activityId = activityId[0]
 
             # Delete all filed time for this activity from the Days table
@@ -230,48 +244,61 @@ def activitiesMenu(personId) -> int:
 
         else:
             print("\nERROR: Did not enter a valid option.")
+
 ## Time filing menu. Menu for all time filing related options
 #personId=the id of the current user
 def timeFilingMenu(personId: str) -> int:
     inputValid = False
+    # Ask for date to file time on
     while inputValid == False:
-        # Prompt for date to file time for
-        print("\n(Enter -1 to return to the main menu)")
-        date = input("Please enter what date you would like to file time for (YYYY-MM-DD): ")
-
         # Input validation
         try:
-            date = datetime.datetime.strptime(date,'%Y-%m-%d').date() # Converts from str to datetime.date
-            inputValid = True
+            # Prompt for date to file time for
+            print("\n(Enter -1 to return to the main menu)")
+            date = input("Please enter what date you would like to file time for (YYYY-MM-DD): ")
 
+            # Convert date from string to datetime.date
+            date = datetime.datetime.strptime(date,'%Y-%m-%d').date()
+            inputValid = True
         except ValueError:
             # Return to main menu if user entered -1
             if (date == '-1'):
                 return 0
             print("\nERROR: Invalid date input. Please try again.")
 
-    # Get and print all user activities
-    activityList = printUserActivities(personId)
-    # Prompt for activity to file
-    print("\n(Enter -1 to return to the main menu)")
-    activityChoice = input("Please enter the number of the activity you'd like to file: ")
+    # Reset inputValid for next prompt
+    inputValid = False
+    
+    # Ask for activity to file time for
+    while (inputValid == False):
+        # Input validation for entering an int
+        try:
+            # Get and print all user activities
+            activityList = printUserActivities(personId)
+            # Prompt for activity to file
+            print("\n(Enter -1 to return to the main menu)")
+            activityChoice = input("Please enter the number of the activity you'd like to file: ")
 
-    # Return to main menu if user entered -1
-    if (activityChoice == '-1'):
-        return 0
+            # Return to main menu if user entered -1
+            if (activityChoice == '-1'):
+                return 0
+            
+            # See if the input can be converted to an int
+            int(activityChoice)
+        except ValueError:
+            print("\nERROR: given value was not a number.")
+            continue
 
-    # Input validation
-    while(int(activityChoice) > len(activityList) or (int(activityChoice) <= 0)):
-        print("\nERROR: chosen activity number does not exist.")
-        print("\n(Enter -1 to return to the main menu)")
-        activityChoice = input("Please enter the number of the activity you'd like to file: ")
-        # Return to main menu if user entered -1
-        if (activityChoice == '-1'):
-            return 0
+        # Input validation for entering a valid int
+        if ((int(activityChoice) > len(activityList)) or (int(activityChoice) <= 0)):
+            print("\nERROR: chosen activity number does not exist.")
+            continue
+    
+        inputValid = True
 
     myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s AND personId = %s", (activityList[int(activityChoice)-1][0], personId))
 
-    activityId = myCursor.fetchone() #TODO: Make this a function so we don't have to fetch then set equal to first index of tuple everytime
+    activityId = myCursor.fetchone()
     activityId = activityId[0]
 
     activityAlreadyDoneOnThisDate = False
