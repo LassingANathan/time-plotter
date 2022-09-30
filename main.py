@@ -178,12 +178,12 @@ def activitiesMenu(personId) -> int:
             if (newActivity == '-1'):
                 return 0
             
-            addActivity = True
+            # Get all activities for the current user
             myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s;", (personId,))
-
             # Check to ensure the user entered activity doesn't already exist
+            addActivity = True
             for activity in myCursor:
-                if (activity == newActivity):
+                if (activity[0] == newActivity):
                     addActivity = False
                     break
 
