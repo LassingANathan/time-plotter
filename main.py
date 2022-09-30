@@ -42,9 +42,10 @@ def userMenu() -> str:
             myCursor.execute("SELECT personName FROM People WHERE personName = %s", (userNameInput,))
             duplicateName = myCursor.fetchall()
 
-            # If a duplicate name exists...
+            # Check that username isn't already taken
             if (duplicateName):
                 print("\nThis name already exists, maybe try another?\n")
+            # Enter user into database
             else:
                 myCursor.execute("INSERT INTO People (personName) VALUES (%s)", (userNameInput,))
                 dataBase.commit()
@@ -56,11 +57,12 @@ def userMenu() -> str:
             myCursor.execute("SELECT personId FROM People WHERE personName = %s", (menuInput,))
             personId = myCursor.fetchall()
 
-            # If entered username was found...
+            # If the entered username was found then log in
             if (personId):
-                personId = personId[0][0] #TODO: Make fuction smh
+                personId = personId[0][0]
                 userName = menuInput
                 loggedIn = True
+            # Username not found
             else: 
                 print("\nNo user found with that name. Maybe create a new one?\n")
 
@@ -85,13 +87,10 @@ def mainMenu(personId: str) -> int:
             myCursor.close()
             return 0
         elif (menuInput == '1'):
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             timeFilingMenu(personId)
         elif (menuInput == '2'):
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             activitiesMenu(personId)
         elif (menuInput == '3'):
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             graphingMenu(personId)
         else:
             print("\nERROR: Did not enter a valid option.")
@@ -119,7 +118,7 @@ def graphingMenu(personId: str) -> int:
                     print("\nPlease enter the START DATE of the range you would like to graph (yyyy-mm-dd)")
                     print("(Enter -1 to return to the main menu)")
                     startDate = input('Note: please enter "all" to graph time from every date ever entered: ')
-                    # Return to main menu if "-1" was entered
+                    # Main Menu
                     if (startDate == '-1'):
                         return 0
 
@@ -127,14 +126,14 @@ def graphingMenu(personId: str) -> int:
                     if (startDate.strip('" ') == "all"):
                         inputValid = True
                         plotRangeOfTime(personId)
-                    # Graph from a range of time
+                    # Graph from a specific range of time
                     else:
                         # Try to convert startDate to a datetime.date
                         startDate = datetime.datetime.strptime(startDate,'%Y-%m-%d').date()
 
-                        # Prompt for the endDate
+                        # Prompt for the end date of graphing
                         endDate = input("Please enter the END DATE of the range you would like to graph (yyyy-mm-dd): ")
-                        # Return to main menu if "-1" was entered
+                        # Main Menu
                         if (endDate == '-1'):
                             return 0
 
@@ -168,7 +167,6 @@ def activitiesMenu(personId) -> int:
 
         # Print list of activities
         elif (menuInput == '1'):
-            # Print all user activities
             printUserActivities(personId)
 
         # Add a new activity
@@ -176,7 +174,7 @@ def activitiesMenu(personId) -> int:
             print("\n(Enter -1 to return to the main menu)")
             newActivity = input("Input the new activity name: ")
 
-            # Return to main menu if user entered -1
+            # Main Menu
             if (newActivity == '-1'):
                 return 0
             
@@ -189,18 +187,17 @@ def activitiesMenu(personId) -> int:
                     addActivity = False
                     break
 
-            # If the activity isn't already entered, then enter it.
+            # Enter activity into database
             if (addActivity):
                 myCursor.execute("INSERT INTO Activities (personId, activityName) VALUES (%s, %s);", (personId, newActivity))
                 dataBase.commit()
                 print ("Activity succesfully added!")
-            else: # Otherwise, do not enter it.
+            else:
                 print("Sorry, we could not add the new activity. The activity likely already exists!")
 
         # Delete an activity
         elif (menuInput == '3'):
             inputValid = False
-            # Ask for date to file time on
             while inputValid == False:
                 # Input validation for entering an int
                 try:
@@ -211,7 +208,7 @@ def activitiesMenu(personId) -> int:
                     print("(Enter -1 to return to the main menu)")
                     activityChoice = input("Please enter the number of the activity you'd like to delete: ")
 
-                    # Return to main menu if user entered -1
+                    # Main Menu
                     if (activityChoice == '-1'):
                         return 0
                     
@@ -228,7 +225,7 @@ def activitiesMenu(personId) -> int:
             
                 inputValid = True
             
-            # Get the activityId so we can delete from Days table
+            # Get activityId of activity to delete
             myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s AND personId = %s", (activityList[int(activityChoice)-1][0], personId))
             activityId = myCursor.fetchone()
             activityId = activityId[0]
@@ -249,7 +246,6 @@ def activitiesMenu(personId) -> int:
 #personId=the id of the current user
 def timeFilingMenu(personId: str) -> int:
     inputValid = False
-    # Ask for date to file time on
     while inputValid == False:
         # Input validation
         try:
@@ -261,7 +257,7 @@ def timeFilingMenu(personId: str) -> int:
             date = datetime.datetime.strptime(date,'%Y-%m-%d').date()
             inputValid = True
         except ValueError:
-            # Return to main menu if user entered -1
+            # Main Menu
             if (date == '-1'):
                 return 0
             print("\nERROR: Invalid date input. Please try again.")
@@ -296,8 +292,8 @@ def timeFilingMenu(personId: str) -> int:
     
         inputValid = True
 
+    # Get activityId of the activity to file
     myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s AND personId = %s", (activityList[int(activityChoice)-1][0], personId))
-
     activityId = myCursor.fetchone()
     activityId = activityId[0]
 
@@ -324,15 +320,15 @@ def timeFilingMenu(personId: str) -> int:
     activityTime = input("Please enter how much time you spent on this activity on "+str(date)+" in minutes: ") #TODO, make it so they can enter in minutes or hours.
     #TODO, regardless, time will be stored in minutes. So eventually make it so if they enter in hours, then we convert to minutes first.
 
-    # Return to main menu if user entered -1
+    # Main Menu
     if (activityTime == '-1'):
         return 0
 
-    # If the activity has already been filed, then update the activityTime field...
+    # Update existing row if activity already filed
     if (activityAlreadyDoneOnThisDate):
         myCursor.execute("UPDATE Days SET activityTime = %s WHERE activityId = %s AND date = %s",(activityTime,activityId,str(date)))
         dataBase.commit()
-    # Else, create a new row
+    # Create new row for this activity and date
     else:
         myCursor.execute("INSERT INTO Days (date, personId, activityId, activityTime) VALUES (%s, %s, %s, %s)", (date, personId, activityId, activityTime)) ##TODO: Eventually make sure that the amount of time doesn't go over amount of time in day
         dataBase.commit()
@@ -369,9 +365,9 @@ def plotRangeOfTime(personId: str, startDate: datetime.date = None, endDate: dat
         # Holds all the time spent on the current activity in list form 
         currentActivityTimeValues = myCursor.fetchall()
         
-        # If this activity has been filed at any time... (empty lists return False, so if no time is stored for the current activity, then this will be false and we won't add it)
+        # Checl that the current activity has ever been filed in this range
         if (currentActivityTimeValues):
-            # Then add all values together, and then append to the total activities time values list
+            # Sum all time for this activity in currentActivityTime
             for j in range(len(currentActivityTimeValues)):
                 currentActivityTime += currentActivityTimeValues[j][0]
 
