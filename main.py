@@ -39,7 +39,7 @@ def userMenu() -> str:
                 continue
 
             # Verify that no one already uses this username
-            myCursor.execute("SELECT personName FROM People WHERE personName = %s", (userNameInput,))
+            myCursor.execute("SELECT personName FROM People WHERE personName = %s;", (userNameInput,))
             duplicateName = myCursor.fetchall()
 
             # Check that username isn't already taken
@@ -47,14 +47,14 @@ def userMenu() -> str:
                 print("\nThis name already exists, maybe try another?\n")
             # Enter user into database
             else:
-                myCursor.execute("INSERT INTO People (personName) VALUES (%s)", (userNameInput,))
+                myCursor.execute("INSERT INTO People (personName) VALUES (%s);", (userNameInput,))
                 dataBase.commit()
                 personId = myCursor.lastrowid
                 loggedIn = True
     
         # Entering an existing username
         else:   
-            myCursor.execute("SELECT personId FROM People WHERE personName = %s", (menuInput,))
+            myCursor.execute("SELECT personId FROM People WHERE personName = %s;", (menuInput,))
             personId = myCursor.fetchall()
 
             # If the entered username was found then log in
@@ -179,7 +179,7 @@ def activitiesMenu(personId) -> int:
                 return 0
             
             addActivity = True
-            myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s", (personId,))
+            myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s;", (personId,))
 
             # Check to ensure the user entered activity doesn't already exist
             for activity in myCursor:
@@ -226,15 +226,15 @@ def activitiesMenu(personId) -> int:
                 inputValid = True
             
             # Get activityId of activity to delete
-            myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s AND personId = %s", (activityList[int(activityChoice)-1][0], personId))
+            myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s AND personId = %s;", (activityList[int(activityChoice)-1][0], personId))
             activityId = myCursor.fetchone()
             activityId = activityId[0]
 
             # Delete all filed time for this activity from the Days table
-            myCursor.execute("DELETE FROM Days WHERE activityId = %s", (activityId,))
+            myCursor.execute("DELETE FROM Days WHERE activityId = %s;", (activityId,))
 
             # Delete activity from Activities table
-            myCursor.execute("DELETE FROM Activities WHERE activityId = %s", (activityId,))
+            myCursor.execute("DELETE FROM Activities WHERE activityId = %s;", (activityId,))
 
             dataBase.commit()
             print("Activity deleted!")
@@ -293,14 +293,14 @@ def timeFilingMenu(personId: str) -> int:
         inputValid = True
 
     # Get activityId of the activity to file
-    myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s AND personId = %s", (activityList[int(activityChoice)-1][0], personId))
+    myCursor.execute("SELECT activityId FROM Activities WHERE activityName = %s AND personId = %s;", (activityList[int(activityChoice)-1][0], personId))
     activityId = myCursor.fetchone()
     activityId = activityId[0]
 
     activityAlreadyDoneOnThisDate = False
 
     # Select the date field where the activityId is the same as the one the user selected, to confirm that this activity has not already been filed today
-    myCursor.execute("SELECT date FROM Days WHERE activityId = %s",(str(activityId),))
+    myCursor.execute("SELECT date FROM Days WHERE activityId = %s;",(str(activityId),))
     datesWhenActivityWasPreviouslyDone = myCursor.fetchall()
 
     ###TODO: Just change the above sql statement to select date from days where activityId = ... AND date = date and make sure it's equal to none
@@ -326,11 +326,11 @@ def timeFilingMenu(personId: str) -> int:
 
     # Update existing row if activity already filed
     if (activityAlreadyDoneOnThisDate):
-        myCursor.execute("UPDATE Days SET activityTime = %s WHERE activityId = %s AND date = %s",(activityTime,activityId,str(date)))
+        myCursor.execute("UPDATE Days SET activityTime = %s WHERE activityId = %s AND date = %s;",(activityTime,activityId,str(date)))
         dataBase.commit()
     # Create new row for this activity and date
     else:
-        myCursor.execute("INSERT INTO Days (date, personId, activityId, activityTime) VALUES (%s, %s, %s, %s)", (date, personId, activityId, activityTime)) ##TODO: Eventually make sure that the amount of time doesn't go over amount of time in day
+        myCursor.execute("INSERT INTO Days (date, personId, activityId, activityTime) VALUES (%s, %s, %s, %s);", (date, personId, activityId, activityTime)) ##TODO: Eventually make sure that the amount of time doesn't go over amount of time in day
         dataBase.commit()
 
 ## Creates a pyPlot pie chart of tracked time in a range of dates. Graphs all tracked time if no date range is given
@@ -342,15 +342,15 @@ def plotRangeOfTime(personId: str, startDate: datetime.date = None, endDate: dat
 
     # Set startDate and endDate to min and max dates (graph all tracked time) if no values were passed
     if (startDate == None and endDate == None):
-        myCursor.execute("SELECT MIN(date) FROM Days WHERE personId = %s", (personId,))
+        myCursor.execute("SELECT MIN(date) FROM Days WHERE personId = %s;", (personId,))
         startDate = myCursor.fetchone()
         startDate = startDate[0]
 
-        myCursor.execute("SELECT MAX(date) FROM Days WHERE personId = %s", (personId,))
+        myCursor.execute("SELECT MAX(date) FROM Days WHERE personId = %s;", (personId,))
         endDate = myCursor.fetchone()
         endDate = endDate[0]
 
-    myCursor.execute("SELECT activityId, activityName FROM Activities WHERE personId = %s", (personId,))
+    myCursor.execute("SELECT activityId, activityName FROM Activities WHERE personId = %s;", (personId,))
     # List of tuples. Each tuple holds an activity's id and its name
     activityAttributes = myCursor.fetchall()
 
@@ -361,7 +361,7 @@ def plotRangeOfTime(personId: str, startDate: datetime.date = None, endDate: dat
         currentActivityTime = 0
 
         # Get all time values spent on the current activity being iterated through
-        myCursor.execute("SELECT activityTime FROM Days WHERE activityId = %s AND date BETWEEN %s AND %s", (str(activityAttributes[i][0]),startDate,endDate))
+        myCursor.execute("SELECT activityTime FROM Days WHERE activityId = %s AND date BETWEEN %s AND %s;", (str(activityAttributes[i][0]),startDate,endDate))
         # Holds all the time spent on the current activity in list form 
         currentActivityTimeValues = myCursor.fetchall()
         
@@ -387,7 +387,7 @@ def plotRangeOfTime(personId: str, startDate: datetime.date = None, endDate: dat
 ## Prints out numbered list of all activities belonging to the given person. Returns a list of the activities (as tuples holding activity name string)
 #personId=the id of the current user
 def printUserActivities(personId : str) -> list:
-    myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s", (personId,))
+    myCursor.execute("SELECT activityName FROM Activities WHERE personId = %s;", (personId,))
     activityList = myCursor.fetchall()
 
     # Print user's activities
