@@ -300,19 +300,12 @@ def timeFilingMenu(personId: str) -> int:
     activityAlreadyDoneOnThisDate = False
 
     # Select the date field where the activityId is the same as the one the user selected, to confirm that this activity has not already been filed today
-    myCursor.execute("SELECT date FROM Days WHERE activityId = %s;",(str(activityId),))
-    datesWhenActivityWasPreviouslyDone = myCursor.fetchall()
+    myCursor.execute("SELECT date FROM Days WHERE activityId = %s AND date = %s;",(str(activityId), str(date)))
+    dateWhereActivityWasDone = myCursor.fetchall()
+    print(dateWhereActivityWasDone)
 
-    ###TODO: Just change the above sql statement to select date from days where activityId = ... AND date = date and make sure it's equal to none
-
-    # Iterate through every date where the selected activity has been already been done to make sure the user hasn't
-    # already entered data for this activity on the selected day
-    for i in range(len(datesWhenActivityWasPreviouslyDone)):
-        if (datesWhenActivityWasPreviouslyDone[i][0] == date):
-            activityAlreadyDoneOnThisDate = True
-            break
-
-    if (activityAlreadyDoneOnThisDate):
+    # If the activity was already done on this date, warn about overriding
+    if (dateWhereActivityWasDone):
         print("\nYou've already filed time for this activity on "+str(date))
         print("Any time you input now will override what you entered earlier!")
 
