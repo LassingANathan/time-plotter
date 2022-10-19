@@ -1,5 +1,5 @@
 ## time-plotter
-Python TimeTracker application that can graph time spent on a user's inputted activities. Utilizes MySQL for data storage and MatPlotLib for graphing.
+This is a Python time tracking application that stores and graphs filed time. This project utilizes MySQL for data storage and MatPlotLib for graphing.
 This application connects to a MySQL database with the schema created with the file 'timeplotterSchema.sql'. 
 
 ## To use this application:
